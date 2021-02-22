@@ -1,274 +1,222 @@
-import collections
-import heapq
+import time
 import math
+import collections
+import functools
 import random
 
+import numpy as np
 import pygame
+import matplotlib.pyplot as plt
 
-# Find clear paths to food
-# for each clear path, if it has a clear path to the current tail, then take it
-# otherwise keep searching for other clear paths to food
-# if all paths have been exhaused
-# find any clear path to touch tail
+from cycle_growth import UnionFind, HamCycle
+import settings
 
+def spawn(R, C, choices = None):
+    """
+    Returns a random location on a grid of dimensions (R, C).
+    If Choices is given, randomly selects a position from choices (a list of positions (y, x)).
+    """
+    if choices is None:
+        return random.randint(0, R-1), random.randint(0, C-1)
+    elif len(choices) == 1:
+        return (-1, -1)
+    return random.choice(choices)
 
-# use a hash map to keep track of snake's body part -> steps before it disappears
-# use a running counter of steps so that hashmap[node] - count is number of steps when it will disappear
+class Snake:
+    def __init__(self, R, C, graph, start_length, centered = True):
+        self.R = R
+        self.C = C
 
-# use a queue to keep track of the order of the snakes body, pop the tail (and delete from hashmap)
-# and append to head the new position
-
-# over constrained when not alloewd to visit the same point twice
-# allow the snake to visit the same point a second time (but not a third time)
-# so long as it does not hit the body
-
-# change visited to a path and cannot visit the same point twice or step on visited[-body_length:]
-
-
+        # a directed graph for a hamiltonian cycle of the map (the path the snake will follow)
+        self.graph = graph 
+        
+        # spawn a snake head at a random location
+        head = (R // 2, C // 2) if centered else self.spawn_snake(R, C)
+        self.body = collections.deque([head])
+        
+        # Snake starts at snake_length
+        for _ in range(start_length - 1):
+            self.body.appendleft(self.graph[self.body[0]])
+        
+        self.food = self.spawn_food(R, C)
+        self.on_food = False # True when the snake's head is on the food
+        
+    def spawn_snake(self, R, C):
+        return spawn(R, C)
+        
+    def spawn_food(self, R, C):
+        snake_body = set(self.body)
+        return spawn(R, C, choices=[(m, n) for m in range(R) for n in range(C) if (m, n) not in snake_body])
+            
+    def step(self):
+        """Move the snake forward one step."""
+        self.body.appendleft(self.graph[self.body[0]])
+        if not self.on_food:
+            self.body.pop()
+        self.on_food = self.food == self.body[0]
+        if self.on_food:
+            self.food = self.spawn_food(self.R, self.C)
+        
+        
 class Game():
     def __init__(self, **kwargs):
+        pygame.init()
+        
         for key in kwargs:
             self.__dict__[key] = kwargs[key]
+        self.SURFACE = pygame.display.set_mode((self.WIDTH, self.HEIGHT))
+        self.COL_WIDTH = self.WIDTH // self.C
+        self.ROW_HEIGHT = self.HEIGHT // self.R
         
-    def run():
-        pass
-    
-    def draw():
-        pass
+        # Hamiltonian cycle is HamCycle.graph
+        self.HAM = HamCycle(self.R, self.C, max_size=self.MAX_SIZE, shuffle=self.SHUFFLE, display=False)
         
-    
-class Segment():
-    def __init__(self):
-        pass
-    
-    
-def spawn_food(snake, rows, cols):
-    global food
-    food = random_loc(rows, cols)
-    while food in snake.body:
-        food = random_loc(rows, cols)
-
-def random_loc(rows, cols):
-    return random.randint(0, cols-1), random.randint(0, rows-1)
-
-def a_star(start, target, tail, grid, graph, obstacles):
-    """
-    Uses a_star heuristic to find a path from start to target and back to tail.
-    If such a path exists, return the path from start to target.
-    
-    If such a path does not exist, returns a path from start to tail.
-    
-    Cannot revisit the same node twice and cannot step on obstacles if obstacles[node] < k
-    where k is the number of steps taken so far.
-    
-    Having a hashmap of obstacles allows for O(1) lookup times to see if a node is taken and
-    allows us to account for the snake's tail moving as we take steps forward without actually
-    updating the datastucture.
-    """
-    pass
-
-class PQNode:
-    def __init__(self, heuristic, position, visited, steps, counter):
-        self.h = heuristic
-        self.p = position
-        self.v = visited
-        self.s = steps
-        self.c = counter
+        # Draw grid and hamiltonian cycle
+        self.GRID_SURFACE = self.get_grid_surface()
+        self.HAM_SURFACE = self.get_ham_surface(self.HAM.graph)
         
-    def __lt__(self, other):
-        return (self.h, len(self.v)) < (other.h, len(other.v))
-
-class PathFinder:
-    """
-    Performs an exhaustive search from start to target and back to tail.
-    1. If such a path exists, returns path from start to target.
-    2. If such a path deos not exist, returns path from start to tail.
-    Uses priority queue and a_star like heuristic to reduce runtime.
-    Prunes search through early stoppping if any solution that meets criteria 1 is found.
-    """
-    def __init__(self, start, target, tail, obstacles, steps):
-        self.start = start
-        self.target = target
-        self.tail = tail
-        self.obstacles = obstacles
-        self.steps = steps
-        self.found_food = False
+        # Snake
+        self.SNAKE = Snake(self.R, self.C, self.HAM.graph, self.SNAKE_LENGTH, centered=self.CENTER_SNAKE)
+        self.SNAKE_WIDTH = int(round(self.SNAKE_WIDTH * min(self.COL_WIDTH, self.ROW_HEIGHT), 0))
         
-    def is_path_to_tail(self, start, visited, steps):
+        # True when the game is running
+        self.active = True           
+        
+        # Inputs are locked until time > input_lock
+        self.input_lock = -1
+        
+        # Blank Screen
+        self.BLANK = pygame.surfarray.make_surface(np.array([[(0,0,0) for _ in range(self.WIDTH)] for _ in range(self.HEIGHT)]))
+        
+    def temporary_lock(self):
+        """Temporarily locks out keys to prevent accidental double key presses."""
+        self.input_lock = time.time() + self.LOCK_TIME
+        
+    def get_grid_surface(self):
+        arr = [[(0,0,0) for _ in range(self.WIDTH)] for _ in range(self.HEIGHT)]
+        for i in range(0, self.HEIGHT, self.ROW_HEIGHT):
+            for j in range(self.WIDTH):
+                arr[i][j] = self.GRID_COLOR
+        for j in range(0, self.WIDTH, self.COL_WIDTH):
+            for i in range(self.HEIGHT):
+                arr[i][j] = self.GRID_COLOR
+        return pygame.surfarray.make_surface(np.array(arr))
+    
+    def get_ham_surface(self, graph, start = (0, 0)):
+        if self.SHOW_GRID:
+            ham_surface = self.GRID_SURFACE
+        else:
+            ham_surface = pygame.surfarray.make_surface(np.array([[(0,0,0) for _ in range(self.WIDTH)] for _ in range(self.HEIGHT)]))
+        path = [start, graph[start]]
+        while path[-1] != start:
+            path.append(graph[path[-1]])
+        path = [self.map_to_grid(*p) for p in path]
+        pygame.draw.lines(ham_surface, self.HAM_COLOR, True, path, self.HAM_WIDTH)
+        return ham_surface
+    
+    def map_to_grid(self, i, j):
         """
-        Perform BFS from start to find any path from start to self.tail.
-        start can be either food and visited are the nodes stepped on to reach the food
-        or start can be self.start and visited is empty.
-        
-        Return True if a path exists from start to self.tail.
+        Maps the grid point (row = i, col = j) to the center of the block representing (i, j)
+        i.e. if the window is 100 by 100 pixels and there are 10 rows and 10 columns:
+            (0, 0) -> (5, 5)
+            (8, 5) -> (85, 55)
         """
-        q = [(start, steps, visited)]
-        while q:
-            next_level = []
-            for p, s, visited in q:
-                for neigh in graph[p]:
-                    if neigh == self.tail:
-                        return True
+        y = (self.ROW_HEIGHT // 2) + i * self.ROW_HEIGHT
+        x = (self.COL_WIDTH // 2) + j * self.COL_WIDTH
+        return (y, x)
+        
+        
+    def run(self):
+        
+        # Set display icon and window name
+        logo = pygame.image.load("./graphics/simple-logo.png")
+        pygame.display.set_icon(logo)
+        pygame.display.set_caption('Hamiltonian Snake')
+        
+        while self.active:
+            time.sleep(self.SLEEP_TIME)
+            self.get_events()
+            keys = pygame.key.get_pressed()
+            t = time.time()
+            
+            if t >= self.input_lock:
+                if keys[pygame.K_UP]:
+                    self.temporary_lock()
+                    self.SLEEP_TIME -= 0.01
+                    self.SLEEP_TIME = max(0, self.SLEEP_TIME)
+                elif keys[pygame.K_DOWN]:
+                    self.temporary_lock()
+                    self.SLEEP_TIME += 0.01
+                    self.SLEEP_TIME = min(0.3, self.SLEEP_TIME)
+                elif keys[pygame.K_ESCAPE]:
+                    self.temporary_lock()
+                    self.active = False
+                elif keys[pygame.K_g]:
+                    self.temporary_lock()
+                    self.SHOW_GRID = not self.SHOW_GRID
+                elif keys[pygame.K_h]:
+                    self.temporary_lock()
+                    self.SHOW_PATH = not self.SHOW_PATH
+                    print('SP', self.SHOW_PATH)
+                
                     
-                    if neigh not in visited[-len(self.obstacles):] and self.obstacles[neigh] <= s:
-                        v = visited[:]
-                        v.append(neigh)
-                        next_level.append((neigh, s+1, v))
-            q = next_level
-        return False
-    
-    def exhaustive_search(self):
-        node = PQNode(self.heuristic(self.start, self.start, self.target),
-                      self.start, [], self.steps, collections.defaultdict(int))
-        q = [node] # (h) heuristic, (p) position, (v) visited path, (s) steps taken - offset included, (c) count for each space
-        while q:
-            node = heapq.heappop(q)
-            p, v, s, c = node.p, node.v, node.s, node.c
+                
+                
+            # Move snake forward one step
+            self.SNAKE.step()
             
-            # if we reached the food, check if a path exists from food to tail
-            if p == self.target:
-                if self.is_path_to_tail(p, v.copy(), s):
-                    v.append(self.target)
-                    self.found_food = True
-                    return v
+            # Draw the snake and board            
+            self.draw()
+    
+        pygame.quit()
+        
+    def get_events(self):
+        """Gets key and mouse inputs.  Deactivates game if input action was quit."""
+        self.events = pygame.event.poll()
+        if self.events.type == pygame.QUIT:
+            self.active = False
+        self.keys_press = pygame.key.get_pressed()
+        self.mouse_press = pygame.mouse.get_pressed()
+        self.mouse_pos = pygame.mouse.get_pos()
+        
+    def get_food_rect(self):
+        i, j = self.map_to_grid(*self.SNAKE.food)
+        x0, y0 = j - self.SNAKE_WIDTH // 2, i - self.SNAKE_WIDTH // 2
+        #x1, y1 = j + self.SNAKE_WIDTH // 2, i + self.SNAKE_WIDTH // 2
+        return [y0, x0, self.SNAKE_WIDTH, self.SNAKE_WIDTH]
+
+    def draw(self):
+        # blank screen
+        self.SURFACE.blit(self.BLANK, (0, 0))
+        
+        if self.SHOW_PATH:
+            # Add Hamiltonian Path
+            print('a')
+            self.SURFACE.blit(self.HAM_SURFACE, (0, 0))
+        elif self.SHOW_GRID:
+            # Add grid
+            self.SURFACE.blit(self.GRID_SURFACE, (0, 0))
+        
+        # Draw snake
+        pygame.draw.lines(self.SURFACE, self.SNAKE_COLOR, False, 
+                          [self.map_to_grid(*segment) for segment in self.SNAKE.body], 
+                          self.SNAKE_WIDTH
+                          )
+        
+        # Draw apple
+        self.SNAKE.food
+        pygame.draw.rect(self.SURFACE, self.FOOD_COLOR, self.get_food_rect())
+        
+        # blit oultine of shape being considered (use pygame.draw)
+        #if self.shape_outline:
+        #    pygame.draw.lines(self.SURFACE, (200, 200, 200), True, 
+        #                       self.shape_outline, 5)
             
-            for neigh in graph[p]:
-                if (neigh not in v[-len(self.obstacles):]) and (self.obstacles[neigh] <= s) and (c[neigh] < 2):
-                    v_ = v.copy()
-                    v_.append(neigh)
-                    c_ = c.copy()
-                    c_[neigh] += 1
-                    next_node = PQNode(self.heuristic(neigh, self.start, self.target),
-                                       neigh,
-                                       v_,
-                                       s + 1,
-                                       c_
-                                       )
-                    heapq.heappush(q, next_node)
+        # add banner indicating current setting
+        #self.SURFACE.blit(self.banner[self.shape_id], (0, 0))
         
-        # No safe path to food and back to tail was found, find path directly to tail
-        self.target = self.tail
-        return self.exhaustive_search()
-    
-    @staticmethod
-    def manhattan(row1, col1, row2, col2):
-        return abs(row1 - row2) + abs(col1 - col2)
-    
-    def heuristic(self, position, origin, target):
-        """
-        Evenly balanced f(x) + g(x) heuristic is guaranteed to seek the shortest path first
-        while still reducing the overall search space.
-        
-        position: (int(row), int(col)) current position
-        origin: (row, col) Initial starting position
-        target: (row, col) Target position
-        """
-        return self.manhattan(*position, *origin) + self.manhattan(*position, *target)
-    
-class Snake():
-    def __init__(self, start_position):
-        self.pos = start_position
-        self.tail = start_position
-        self.body = collections.deque([start_position])
-        self.obstacles = collections.defaultdict(int)
-        self.obstacles[start_position] = 0
-        self.steps = 0
-        self.safe_path = []
-    
-    def step(self):
-        tail_return = self.tail
-        self._seek_path()
-        self._follow_safe_path()
-        self._update_obstacles()
-        self._seek_path_to_tail(tail_return)
-        self._update_obstacles()
-        
-        
-    def _seek_path(self):
-        """Finds a safe path for the snake to reach food from the current position."""
-        solver = PathFinder(self.pos, food, self.tail, self.obstacles, self.steps)
-        v = solver.exhaustive_search()
-        self.safe_path = v
-        print(v, self.pos)
-        
-    def _seek_path_to_tail(self, tail_return):
-        """Finds a safe path for the snake to reach tail from the current position."""
-        solver = PathFinder(self.pos, tail_return, self.tail, self.obstacles, self.steps)
-        v = solver.exhaustive_search()
-        print(v, self.pos)
-        self.safe_path = v
-        
-    def _follow_safe_path(self):
-        self.body.appendleft(self.safe_path[0]) # add new head
-        for i in range(1, len(self.safe_path)):
-            self.body.pop()
-            self.body.appendleft(self.safe_path[i])
-        self.tail = self.body[-1]
-        self.pos = self.body[0]
-        
-    def _update_obstacles(self):
-        self.obstacles = collections.defaultdict(int)
-        for i in range(len(self.body)+1):
-            self.obstacles[self.body[-i]] = i
-        
-def show_grid(snake, R, C):
-    arr = [[0]*C for _ in range(R)]
-    arr[food[0]][food[1]] = 2
-    for i, j in snake.body:
-        arr[i][j] = 1
-    for row in arr:
-        print(row)
-    print()
-    
+        pygame.display.flip()
+
 if __name__ == "__main__":
-    global grid, graph, food
-    
-    settings = {"WIDTH": 800,
-                "HEIGHT": 800,
-                "ROWS": 6,
-                "COLUMNS": 6,
-                "SLEEP_TIME": 0,
-                "LOCK_TIME": 0.2
-                }
-    
-    #g = Game()
-    #g.run()
-    
-    R, C = settings["ROWS"], settings["COLUMNS"]
-    s = Snake(random_loc(R, C))
-    spawn_food(s, R, C)
-        
-    graph = collections.defaultdict(list)
-    for i in range(R):
-        for j in range(C):
-            a = (i, j)
-            if i:
-                b = (i-1, j)
-                graph[a].append(b)
-                graph[b].append(a)
-            if j:
-                b = (i, j-1)
-                graph[a].append(b)
-                graph[b].append(a)
-    
-    show_grid(s, R, C)
-    for _ in range(30):
-        s.step()
-        spawn_food(s, R, C)
-        show_grid(s, R, C)
-    
-    print(len(s.body))
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
+    g = Game(**settings.settings)
+    g.run()    

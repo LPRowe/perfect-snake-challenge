@@ -63,15 +63,54 @@ class UnionFind:
 
 
 class HamCycle:
-    def __init__(self, R, C, max_size = 36):
+    def __init__(self, R, C, max_size = 6, shuffle = True, display = True):
+        """
+        R, C: (Rows, Columns) in the array
+        max_size: The maximum subarray size allowed, recommended 6 <= max_size <= 40 because of sub-cycle calc. times
+        shuffle: Shuffles kernel windows before merging subcycles (if true makes fullcycle appear more random)
+        display: If true plots the subdivided regions, subcycles and full cycles for the array
+        """
+        
         self.R = R
         self.C = C
         self.max_size = max_size
+        
+        print("Subdividing array")
         self.subarrays = self.subdivide(R-1, C-1, max_size)
-        self.show_subcycle_regions()
+        if display: self.show_subcycle_regions()
+        
+        print("Finding Subarray Hamiltonian Cycles")
+        self.count = 1
         self.subcycles = [self.ham_cycle(*subarr) for subarr in self.subarrays]
-        self.full_cycle = self.kernel_connect()
-        self.show_fullcycle()
+        if display: self.show_subcycles()
+        
+        print("Combining subcycles into a full cycle")
+        self.full_cycle = self.kernel_connect(shuffle = shuffle)
+        if display: self.show_fullcycle()
+        
+        print("Converting full_cycle into a Directed Graph")
+        self.graph = self.get_graph()
+        
+        print("Hamiltonian Cycle Complete!")
+        
+    def get_graph(self):
+        g = collections.defaultdict(list)
+        for a, b in self.full_cycle:
+            g[a].append(b)
+            g[b].append(a)
+        
+        start = (0, 0)
+        finish = g[start][0]
+        dag = {finish: start}
+        while start != finish:
+            a, b = g[start]
+            if dag.get(a, (-1, -1)) == start:
+                dag[start] = b
+                start = b
+            else:
+                dag[start] = a
+                start = a
+        return dag
         
     def kernel_connect(self, shuffle = True):
         """
@@ -99,7 +138,7 @@ class HamCycle:
                 a, b = tuple(sorted(a)), tuple(sorted(b))
                 uf.union(a, b)
                 
-        print(uf.group)
+        #print(uf.group)
         
         # 2-4. Create parallel and vertical kernels and shuffle
         kernels = []
@@ -107,7 +146,10 @@ class HamCycle:
             for j in range(self.C-1):
                 v1, v2 = ((i, j), (i+1, j)), ((i, j+1), (i+1, j+1))
                 h1, h2 = ((i, j), (i, j+1)), ((i+1, j), (i+1, j+1))
-                kernels.append((v1, v2, h1, h2))
+                if v1 in uf.id and v2 in uf.id and uf.id[v1] != uf.id[v2]:
+                    kernels.append((v1, v2, h1, h2))
+                elif h1 in uf.id and h2 in uf.id and uf.id[h1] != uf.id[h2]:
+                    kernels.append((v1, v2, h1, h2))
         if shuffle:
             random.shuffle(kernels)
         
@@ -245,20 +287,20 @@ class HamCycle:
         # find cycle from (0, 0) through all nodes and back to (0, 0)
         start = (0, 0)
         res = find_cycle(R, C)
-        print((y1, x1, y2, x2))
-        print(res)
-        print()
+        
         # shift the path by offset_x and offset_y
         res = [(y+offset_y, x+offset_x) for y, x in res]
+        
+        #print(self.count,'/',len(self.subarrays))
+        self.count += 1
         
         return res
 
 
 if __name__ == "__main__":
     plt.close('all')
-    R, C = 100, 100
-    ham = HamCycle(R, C, max_size = 36)
-    ham.show_subcycles()
+    R, C = 30, 30
+    ham = HamCycle(R, C, max_size = 36, shuffle = True, display = False)
 
 
 
