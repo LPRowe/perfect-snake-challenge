@@ -13,6 +13,15 @@ settings = {
             "HEIGHT": 1000,              # window height
             
             # =============================================================================
+            # GRID SETTINGS
+            # =============================================================================
+            "C": 30,
+            "R": 30,
+            "GRID_COLOR": (150, 150, 150),
+            "GRID_THICKNESS": 1,
+            "SHOW_GRID": True,               # Turn grid on / off
+            
+            # =============================================================================
             # GAME SPEED SETTINGS
             # =============================================================================
             "SLEEP_TIME": 0.1,           # sleep between iterations to reduce the frame rate
@@ -26,6 +35,7 @@ settings = {
             "HAM_COLOR": (100, 255, 100), # color of the ham path
             "HAM_WIDTH": 2,               # width of the hamiltonian cycle path
             "SHOW_PATH": True,
+            "SHORTCUTS": True,    # Allows snake to leave the path if it is safe and efficient to do so
 
             # =============================================================================
             # SNAKE AND FOOD SETTINGS
@@ -36,12 +46,6 @@ settings = {
             "SNAKE_LENGTH": 10,           # the start length of the snake
             "FOOD_COLOR": (175, 0, 0),
             
-            # =============================================================================
-            # GRID SETTINGS
-            # =============================================================================
-            "C": 20,
-            "R": 20,
-            "GRID_COLOR": (150, 150, 150),
-            "GRID_THICKNESS": 1,
-            "SHOW_GRID": True               # Turn grid on / off
+            
+            "END_SETTINGS": None
             }

@@ -23,9 +23,12 @@ def spawn(R, C, choices = None):
     return random.choice(choices)
 
 class Snake:
-    def __init__(self, R, C, graph, start_length, centered = True):
+    def __init__(self, R, C, graph, start_length, centered = True, shortcuts = True):
         self.R = R
         self.C = C
+        
+        # Once he snake is max_length just chase tail
+        self.chase_tail = False
 
         # a directed graph for a hamiltonian cycle of the map (the path the snake will follow)
         self.graph = graph 
@@ -41,21 +44,81 @@ class Snake:
         self.food = self.spawn_food(R, C)
         self.on_food = False # True when the snake's head is on the food
         
+        # If there is a shorter (and safe) path to food, break from Hamiltonian Cycle
+        self.shortcuts = shortcuts
+        self.cost = self.calc_cost(self.food) if shortcuts else collections.defaultdict(int) 
+        
     def spawn_snake(self, R, C):
         return spawn(R, C)
         
     def spawn_food(self, R, C):
         snake_body = set(self.body)
         return spawn(R, C, choices=[(m, n) for m in range(R) for n in range(C) if (m, n) not in snake_body])
+    
+    def is_safe(self, new_head, food_found = 3):
+        """
+        Looks ahead snake.length + food_found steps:
+            if snake never bites it's tail when following the ham path returns True
+            if snake bites its tail then the path is not safe returns False
+        """
+        if self.chase_tail:
+            return False
+        
+        temp_body = self.body.copy()
+        temp_body.appendleft(new_head)
+        temp_body_set = set(temp_body)
+        for _ in range(len(temp_body)):
+            temp_body.appendleft(self.graph[temp_body[0]])
+            if food_found > 0:
+                temp_body_set.remove(temp_body.pop())
+            food_found -= 1
+            if temp_body[0] in temp_body_set:
+                return False
+            temp_body_set.add(temp_body[0])
+        return True
             
     def step(self):
         """Move the snake forward one step."""
-        self.body.appendleft(self.graph[self.body[0]])
+        if not self.shortcuts or self.chase_tail:
+            self.body.appendleft(self.graph[self.body[0]])
+        else:
+            i, j = self.body[0]
+            new_head = min((pos for pos in ((i+1,j),(i-1,j),(i,j+1),(i,j-1)) if pos not in self.body), 
+                           key = lambda p: self.cost[p])
+            if self.is_safe(new_head):
+                # Make sure short cut doesn't lead to potential death
+                self.body.appendleft(new_head)
+            else:
+                self.body.appendleft(self.graph[self.body[0]])
+        
         if not self.on_food:
             self.body.pop()
+        
+        # If snake found food, update food
         self.on_food = self.food == self.body[0]
         if self.on_food:
             self.food = self.spawn_food(self.R, self.C)
+            if self.food == (-1, -1):
+                self.chase_tail = True
+            if self.shortcuts:
+                self.cost = self.calc_cost(self.food)
+    
+    @functools.lru_cache(None)
+    def calc_cost(self, food):
+        """Returns a map of (i, j) -> steps to reach food if following the ham cycle"""
+        if self.chase_tail:
+            return collections.defaultdict(lambda: self.R * self.C)
+        
+        pos = self.graph[food]
+        cost = collections.defaultdict(lambda: self.R * self.C)
+        cost[food] = 0
+        N = self.R * self.C
+        steps = 1
+        while steps <= N:
+            cost[pos] = N - steps
+            pos = self.graph[pos]
+            steps += 1
+        return cost
         
         
 class Game():
@@ -73,10 +136,11 @@ class Game():
         
         # Draw grid and hamiltonian cycle
         self.GRID_SURFACE = self.get_grid_surface()
-        self.HAM_SURFACE = self.get_ham_surface(self.HAM.graph)
+        self.HAM_SURFACE_GRID, self.HAM_SURFACE = self.get_ham_surface(self.HAM.graph)
         
         # Snake
-        self.SNAKE = Snake(self.R, self.C, self.HAM.graph, self.SNAKE_LENGTH, centered=self.CENTER_SNAKE)
+        self.SNAKE = Snake(self.R, self.C, self.HAM.graph, self.SNAKE_LENGTH, 
+                           centered=self.CENTER_SNAKE, shortcuts=self.SHORTCUTS)
         self.SNAKE_WIDTH = int(round(self.SNAKE_WIDTH * min(self.COL_WIDTH, self.ROW_HEIGHT), 0))
         
         # True when the game is running
@@ -103,16 +167,15 @@ class Game():
         return pygame.surfarray.make_surface(np.array(arr))
     
     def get_ham_surface(self, graph, start = (0, 0)):
-        if self.SHOW_GRID:
-            ham_surface = self.GRID_SURFACE
-        else:
-            ham_surface = pygame.surfarray.make_surface(np.array([[(0,0,0) for _ in range(self.WIDTH)] for _ in range(self.HEIGHT)]))
+        ham_surface_grid = self.GRID_SURFACE.copy()
+        ham_surface = pygame.surfarray.make_surface(np.array([[(0,0,0) for _ in range(self.WIDTH)] for _ in range(self.HEIGHT)]))
         path = [start, graph[start]]
         while path[-1] != start:
             path.append(graph[path[-1]])
         path = [self.map_to_grid(*p) for p in path]
         pygame.draw.lines(ham_surface, self.HAM_COLOR, True, path, self.HAM_WIDTH)
-        return ham_surface
+        pygame.draw.lines(ham_surface_grid, self.HAM_COLOR, True, path, self.HAM_WIDTH)
+        return ham_surface_grid, ham_surface
     
     def map_to_grid(self, i, j):
         """
@@ -159,9 +222,6 @@ class Game():
                     self.SHOW_PATH = not self.SHOW_PATH
                     print('SP', self.SHOW_PATH)
                 
-                    
-                
-                
             # Move snake forward one step
             self.SNAKE.step()
             
@@ -189,9 +249,10 @@ class Game():
         # blank screen
         self.SURFACE.blit(self.BLANK, (0, 0))
         
-        if self.SHOW_PATH:
+        if self.SHOW_PATH and self.SHOW_GRID:
+            self.SURFACE.blit(self.HAM_SURFACE_GRID, (0, 0))
+        elif self.SHOW_PATH:
             # Add Hamiltonian Path
-            print('a')
             self.SURFACE.blit(self.HAM_SURFACE, (0, 0))
         elif self.SHOW_GRID:
             # Add grid
