@@ -127,11 +127,13 @@ After doing so, update the union-find data structure by removing the old edges, 
 
 Repeat this process until only one subcycle remains.  
 
+<b>Note:</b> We can add variety (apparent randomness) to the resulting Hamiltonian Cycle by shuffling the kernels first so that subcycles are merged at different locations and in different orders every time.  Using a smaller max subarray size also increases the apparent randomness of the resulting structure.  
 
+<u><b>Random and Structured Full Hamiltonian Cycle</b></u>
 
-
-Add variety to the resulting array by shuffling the kernels first.
-
+<img src="images/full_cycle2.png" width="66%">
+<img src="images/full_cycle_kernel6_50_noshuffle.png" width="66%">
+<hr>
 
 5. Convert the edges of the Hamiltonian Cycle into a directed graph for the snake to follow.
 
