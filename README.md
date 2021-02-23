@@ -136,7 +136,11 @@ This process can be applied randomly across the image until all cycles are conne
 
 To do so we first put all of the edges into a <b>union-find</b> data structure, where each cycle is it's own group of edges.  
 
-Then we create windows, (called a kernel in the code), of size 2 by 2. The kernel is either | | or <u>&oline;&oline;</u>.  
+Then we create windows, (called a kernel in the code), of size 2 by 2. The kernel is either ```| | or <u>&oline;&oline;</u>```.  
+
+```html5
+| | <u>&oline;&oline;</u>
+```
 
 A window is created for every possible 2 by 2 region on the array.  
 
