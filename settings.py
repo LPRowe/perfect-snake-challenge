@@ -28,15 +28,15 @@ settings = {
             # =============================================================================
             # WINDOW SETTINGS
             # =============================================================================
-            "WIDTH": None,               # window width (pixels) if None will be calculated from pixels per column
-            "HEIGHT": 1200,              # window height
+            "WIDTH": 800,               # window width (pixels); change to None to autoscale window size
+            "HEIGHT": 800,              # window height
             "BOX_WIDTH": 26,             # iff "WIDTH" is None each row and column will be "BOX_WIDTH" pixels wide
             
             # =============================================================================
             # GRID SETTINGS
             # =============================================================================
-            "C": 20,                         # 4 <= C <= 400 and C must be even
-            "R": 40,                         # 4 <= R <= 400 and R must be even
+            "C": 100,                         # 4 <= C <= 400 and C must be even
+            "R": 100,                         # 4 <= R <= 400 and R must be even
             "GRID_COLOR": (150, 150, 150),
             "GRID_THICKNESS": 1,
             "SHOW_GRID": False,              # Turn grid on / off

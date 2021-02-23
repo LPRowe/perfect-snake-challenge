@@ -42,7 +42,7 @@ class Snake:
         snake_body = set(self.body)
         return spawn(R, C, choices=[(m, n) for m in range(R) for n in range(C) if (m, n) not in snake_body])
     
-    def is_safe(self, new_head, food_found = 3):
+    def is_safe(self, new_head, food_found = 5):
         """
         Looks ahead snake.length + food_found steps:
             if snake never bites it's tail when following the ham path returns True
@@ -248,8 +248,6 @@ class Game():
         if self.events.type == pygame.QUIT:
             self.active = False
         self.keys_press = pygame.key.get_pressed()
-        self.mouse_press = pygame.mouse.get_pressed()
-        self.mouse_pos = pygame.mouse.get_pos()
         
     def get_food_rect(self):
         """Returns [top, left, width, height] for the food object in pixels."""

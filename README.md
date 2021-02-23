@@ -5,6 +5,24 @@ Methods used to solve perfect snake: Memoization, Divide and Conquer, Union Find
 
 More details in [the how it was made section](#how-it-was-made).
 
+<img src="images/ham_path_onoff.gif" width="66%">
+
+<details>
+
+<summary>Show grid and Hamiltonian Cycle on / off feature (click to show)</summary>
+
+<img src="images/grid_onoff.gif" width="66%">
+
+</details>
+
+<details>
+
+<summary>Speed up game to win screen (click to show)</summary>
+
+<img src="images/victory.gif" width="66%">
+
+</details>
+
 # usage
 
 1. Adjust settings.py as desired.
@@ -140,7 +158,7 @@ Then we create windows, (called a kernel in the code), of size 2 by 2. The kerne
 
 A window is created for every possible 2 by 2 region on the array.  
 
-If the two parallel edges both align with an edge in the subcycles and each edge belongs to a different subycle then switch the edges from | | to <ins>&oline;&oline;</ins> or vice versa.  
+If the two parallel edges both overlap with a edges in the subcycles and each edge belongs to a different subycle then switch the edges from | | to <ins>&oline;&oline;</ins> or vice versa.  
 
 After doing so, update the union-find data structure by removing the old edges, adding the new edges, and ensuring that the two formerly separate subcycles are merged into one larger subcycle.
 
@@ -237,7 +255,7 @@ If it does not follow the Hamiltonian Cycle, then send out a hypothetical snake 
 <summary>8. Make the snake sentient</summary>
 <br>
 
-{snake_out.gif}
+<img src="images/sentient2.gif" width="66%">
 
 </details>
 
