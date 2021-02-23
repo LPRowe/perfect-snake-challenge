@@ -79,7 +79,10 @@ The process of making a perfect snake can be broken down into several sub-proble
 
 Click on each item below to see visual aids and the subproblem's solution.  
 
-1. Calculate a Hamiltonian Cycle for a small array (8 by 8 or less)
+
+<details>
+
+<summary>1. Calculate a Hamiltonian Cycle for a small array (8 by 8 or less)</summary>
 
 HamCycle.ham_cycle.helper uses backtracking to find a path that visits every node once and ends adjacent to the start node.
 This approach is limited to array sizes of (8 by 6) or smaller.  
@@ -88,7 +91,11 @@ Keep in mind that any array of dimenions (R, C) where R and C are both odd with 
 <img src="images/full_cycle_small.png" width="66%">
 <hr>
 
-2. Subdivide a large array into small subarrays of <b>max_size</b> where every subarray contains an even number of nodes.
+</details>
+
+<details>
+
+<summary>2. Subdivide a large array into small subarrays of <b>max_size</b> where every subarray contains an even number of nodes.</summary>
 
 Because the Hamiltonian Cycle solution does not scale well, we cannot use it to find a cycle for an array of size say (20 by 20) and definitely not for an array of size (400 by 400).
 
@@ -97,14 +104,22 @@ We can however, use a divide and conquer approach to break down the large array 
 <img src="images/subregions.png" width="66%">
 <hr>
 
-3. Calculate the Hamiltonian Cycle for every subarray.  We will call these sub-cycles.
+</details>
+
+<details>
+
+<summary>3. Calculate the Hamiltonian Cycle for every subarray.  We will call these sub-cycles.</summary>
 
 <b>Memoization Optimization</b>: For subarray (y1, x1, y2, x2) solve for the subarray (0, 0, y2 - y1, x2 - x1) and then shift the resulting cycle by y1, x1.  This may seem counter productive, but by doing this to every cycle we solve for, we can memoize the results so as long as two subarrays are the same shape, they will have the same solution thus greatly decreasing the number of subarrays that we need to find Hamiltonian Cycles for. 
 
 <img src="images/subregion_cycles.png" width="66%">
 <hr>
 
-4. Connect the subcycles to form one large Hamiltonian Cycle that spans the entire array.
+</details>
+
+<details>
+
+<summary>4. Connect the subcycles to form one large Hamiltonian Cycle that spans the entire array.</summary>
 
 ```html5
 Any two adjacent subcycles can be connected into a larger subcycle if they share two adjacent edges.
@@ -135,9 +150,28 @@ Repeat this process until only one subcycle remains.
 <img src="images/full_cycle_kernel6_50_noshuffle.png" width="66%">
 <hr>
 
-5. Convert the edges of the Hamiltonian Cycle into a directed graph for the snake to follow.
+</details>
 
-6. Create the game of snake
+<details>
+
+<summary>5. Convert the edges of the Hamiltonian Cycle into a directed graph for the snake to follow.</summary>
+
+After merging all subcycles into a single cycle the edges are non-sequentially stored in a union-find data structure.
+
+To convert the list of edges into a directed graph we first convert them into an undirected graph where each node has two neighbors. i.e: graph[(i, j)] -> [(i1, j1), (i2, j2)]
+
+Then we pick a start location (0, 0) and randomly choose what direction the graph goes by randomly picking (0, 1) or (1, 0) as the child of (0, 0)
+
+(0, 0) is now the parent node and (1, 0) is the child node.  Repeat this process and never choose the parent node as the next node.  
+
+When we return to (0, 0) the directed graph is complete.  
+<hr>
+
+</details>
+
+<details>
+
+<summary>6. Create the game of snake</summary>
 
 Have a Game class, Snake class, and HamCycle class.  
 Upon initializing the game:
@@ -171,7 +205,11 @@ Last but not least notes on settings: more notes in the settings.py file
 7. SHOW_PATH toggles the Hamiltonian Cycle visibility on and off, can be changed in game with the h key.
 
 
-7. Detect shortcuts to the food and determine when it is safe to take a shortcut.
+</details>
+
+<details>
+
+<summary>7. Detect shortcuts to the food and determine when it is safe to take a shortcut.</summary>
 
 Calculate the <b>cost</b> to reach the food from every position on the snake's path.  Where the cost[(i, j)] is the number of steps the snake must take to reach the food if it strictly follows the Hamiltonian Cycle.
 
@@ -185,10 +223,15 @@ If the best direction follows the Hamiltonian Cycle, then is safe.
 
 If it does not follow the Hamiltonian Cycle, then send out a hypothetical snake to take one step in the chosen direction and then follow the Hamiltonian Cycle for SNAKE.body.length + hypothetical_food steps.  If the hypothetical snake does not bite it's own tail then the direction is safe.  Here hypothetical_food is set to 5 meaning we expect the snake to at most find 5 food on this path.  This is important because the tail does not move when the snake finds food.  This parameter is not accessible in settings.py, it is found in Snake.is_safe and can be increased to perhaps 10 if you wish to be extremely cautious.  I would recommend keeping it at least 3 though to avoid mistakes near the end-game.
 
-8. Make the snake sentient
+</details>
+
+<details>
+
+<summary>8. Make the snake sentient</summary>
 
 {snake_out.gif}
 
+</details>
 
 
 
