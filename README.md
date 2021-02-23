@@ -83,6 +83,7 @@ Click on each item below to see visual aids and the subproblem's solution.
 <details>
 
 <summary>1. Calculate a Hamiltonian Cycle for a small array (8 by 8 or less)</summary>
+<br>
 
 HamCycle.ham_cycle.helper uses backtracking to find a path that visits every node once and ends adjacent to the start node.
 This approach is limited to array sizes of (8 by 6) or smaller.  
@@ -96,6 +97,7 @@ Keep in mind that any array of dimenions (R, C) where R and C are both odd with 
 <details>
 
 <summary>2. Subdivide a large array into small subarrays of <b>max_size</b> where every subarray contains an even number of nodes.</summary>
+<br>
 
 Because the Hamiltonian Cycle solution does not scale well, we cannot use it to find a cycle for an array of size say (20 by 20) and definitely not for an array of size (400 by 400).
 
@@ -109,6 +111,7 @@ We can however, use a divide and conquer approach to break down the large array 
 <details>
 
 <summary>3. Calculate the Hamiltonian Cycle for every subarray.  We will call these sub-cycles.</summary>
+<br>
 
 <b>Memoization Optimization</b>: For subarray (y1, x1, y2, x2) solve for the subarray (0, 0, y2 - y1, x2 - x1) and then shift the resulting cycle by y1, x1.  This may seem counter productive, but by doing this to every cycle we solve for, we can memoize the results so as long as two subarrays are the same shape, they will have the same solution thus greatly decreasing the number of subarrays that we need to find Hamiltonian Cycles for. 
 
@@ -120,6 +123,7 @@ We can however, use a divide and conquer approach to break down the large array 
 <details>
 
 <summary>4. Connect the subcycles to form one large Hamiltonian Cycle that spans the entire array.</summary>
+<br>
 
 ```html5
 Any two adjacent subcycles can be connected into a larger subcycle if they share two adjacent edges.
@@ -155,6 +159,7 @@ Repeat this process until only one subcycle remains.
 <details>
 
 <summary>5. Convert the edges of the Hamiltonian Cycle into a directed graph for the snake to follow.</summary>
+<br>
 
 After merging all subcycles into a single cycle the edges are non-sequentially stored in a union-find data structure.
 
@@ -172,6 +177,7 @@ When we return to (0, 0) the directed graph is complete.
 <details>
 
 <summary>6. Create the game of snake</summary>
+<br>
 
 Have a Game class, Snake class, and HamCycle class.  
 Upon initializing the game:
@@ -210,6 +216,7 @@ Last but not least notes on settings: more notes in the settings.py file
 <details>
 
 <summary>7. Detect shortcuts to the food and determine when it is safe to take a shortcut.</summary>
+<br>
 
 Calculate the <b>cost</b> to reach the food from every position on the snake's path.  Where the cost[(i, j)] is the number of steps the snake must take to reach the food if it strictly follows the Hamiltonian Cycle.
 
@@ -228,6 +235,7 @@ If it does not follow the Hamiltonian Cycle, then send out a hypothetical snake 
 <details>
 
 <summary>8. Make the snake sentient</summary>
+<br>
 
 {snake_out.gif}
 
