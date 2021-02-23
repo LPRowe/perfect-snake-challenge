@@ -3,12 +3,11 @@ Bot plays a perfect game of snake by following a Hamiltonian Cycle and taking sh
 
 # usage
 
-Adjust settings.py to the desired initial conditions.  
+1. Adjust settings.py as desired.
 
 <details>
 
-<summary>Initial settings are as follows:</summary>
-
+<summary>Click to show default settings.</summary>
 
 ```python
 settings = {
@@ -17,13 +16,13 @@ settings = {
             # =============================================================================
             "WIDTH": None,               # window width (pixels) if None will be calculated from pixels per column
             "HEIGHT": 1200,              # window height
-            "COLUMN_WIDTH": 30,          # iff "WIDTH" is None each row and column will be "COLUMN_WIDTH" pixels wide
+            "BOX_WIDTH": 30,             # iff "WIDTH" is None then each row and column will be "BOX_WIDTH" pixels wide
             
             # =============================================================================
             # GRID SETTINGS
             # =============================================================================
-            "C": 40,                         # 4 <= C <= 400 and C must be even
-            "R": 40,                         # 4 <= R <= 400 and R must be even
+            "C": 40,                         # 4 <= number of columns <= 400 and C must be even
+            "R": 40,                         # 4 <= number of rows <= 400 and R must be even
             "GRID_COLOR": (150, 150, 150),
             "GRID_THICKNESS": 1,
             "SHOW_GRID": False,              # Turn grid on / off
@@ -58,9 +57,14 @@ settings = {
 
 </details>
 
+2. Run perfect_snake_game.py
+3. Enjoy!
+
+
 # controls
 
-up / down arrow keys: Speeds up / slows down game speed
-g: show / hide grid
-h: show / hide Hamiltonian cycle
-s: on / off shortcuts (if off snake will strictly follow the Hamiltonian cycle)
+<b>escape key</b>: quit game<br>
+<b>up / down arrow keys</b>: speed up / slow down game speed<br>
+<b>g</b>: show / hide grid<br>
+<b>h</b>: show / hide Hamiltonian cycle<br>
+<b>s</b>: on / off shortcuts (if off snake will strictly follow the Hamiltonian cycle)<br>

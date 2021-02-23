@@ -117,8 +117,9 @@ class Game():
         
         # set display width and height
         if self.WIDTH is None:
-            self.WIDTH, self.HEIGHT = self.C*self.COLUMN_WIDTH, self.R*self.COLUMN_WIDTH
-            
+            self.WIDTH, self.HEIGHT = self.C*self.BOX_WIDTH, self.R*self.BOX_WIDTH
+        
+        # Create 
         self.SURFACE = pygame.display.set_mode((self.HEIGHT, self.WIDTH))
         self.COL_WIDTH = self.WIDTH // self.C
         self.ROW_HEIGHT = self.HEIGHT // self.R
@@ -150,7 +151,7 @@ class Game():
         
     def get_grid_surface(self):
         """
-        Creates a pygame surface with a grid that marks the rows and columns that the snake can move on.
+        Returns a pygame surface with a grid that marks the rows and columns that the snake can move on.
         """
         arr = [[(0,0,0) for _ in range(self.WIDTH)] for _ in range(self.HEIGHT)]
         for i in range(0, self.HEIGHT, self.ROW_HEIGHT):
@@ -164,7 +165,7 @@ class Game():
     def get_ham_surface(self, graph, start = (0, 0)):
         """
         Creates a pygame surface showing the hamiltonian path.
-        Returns ham_surface_with_grid, ham_surface_with_grid_hidden
+        Returns ham_surface_with_grid, ham_surface_without_grid
         """
         ham_surface_grid = self.GRID_SURFACE.copy()
         ham_surface = pygame.surfarray.make_surface(np.array([[(0,0,0) for _ in range(self.WIDTH)] for _ in range(self.HEIGHT)]))

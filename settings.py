@@ -4,12 +4,12 @@ settings = {
             # =============================================================================
             "WIDTH": None,               # window width (pixels) if None will be calculated from pixels per column
             "HEIGHT": 1200,              # window height
-            "COLUMN_WIDTH": 30,          # iff "WIDTH" is None each row and column will be "COLUMN_WIDTH" pixels wide
+            "BOX_WIDTH": 26,             # iff "WIDTH" is None each row and column will be "BOX_WIDTH" pixels wide
             
             # =============================================================================
             # GRID SETTINGS
             # =============================================================================
-            "C": 40,                         # 4 <= C <= 400 and C must be even
+            "C": 20,                         # 4 <= C <= 400 and C must be even
             "R": 40,                         # 4 <= R <= 400 and R must be even
             "GRID_COLOR": (150, 150, 150),
             "GRID_THICKNESS": 1,
@@ -40,5 +40,4 @@ settings = {
             "CENTER_SNAKE": False,        # start with snake in center of map
             "SNAKE_LENGTH": 10,           # the start length of the snake
             "FOOD_COLOR": (175, 0, 0),
-
             }
