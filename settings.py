@@ -35,8 +35,8 @@ settings = {
             # =============================================================================
             # GRID SETTINGS
             # =============================================================================
-            "C": 100,                         # 4 <= C <= 400 and C must be even
-            "R": 100,                         # 4 <= R <= 400 and R must be even
+            "C": 40,                         # 4 <= C <= 400 and C must be even
+            "R": 40,                         # 4 <= R <= 400 and R must be even
             "GRID_COLOR": (150, 150, 150),
             "GRID_THICKNESS": 1,
             "SHOW_GRID": False,              # Turn grid on / off
@@ -64,6 +64,6 @@ settings = {
             "SNAKE_WIDTH": 0.8,           # fraction of min(col_width, row_height)
             "SNAKE_COLOR": (0, 100, 0), 
             "CENTER_SNAKE": False,        # start with snake in center of map
-            "SNAKE_LENGTH": 10,           # the start length of the snake
+            "SNAKE_LENGTH": 20,           # the start length of the snake minimum is 2
             "FOOD_COLOR": (175, 0, 0),
             }

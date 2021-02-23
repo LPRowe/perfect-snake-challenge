@@ -23,6 +23,14 @@ More details in [the how it was made section](#how-it-was-made).
 
 </details>
 
+<details>
+
+<summary>Works with large arrays too (100 x 100) (click to show)</summary>
+
+<img src="images/100.gif" width="66%">
+
+</details>
+
 # usage
 
 1. Adjust settings.py as desired.
@@ -204,6 +212,8 @@ Upon initializing the game:
 3. solve the Hamiltonian Cycle of the grid
 4. create pygame surfaces for the grid, Hamiltonian Cycle, and a blank surface (for clearing screen when grid and Hamiltonian Cycle are hidden)
 
+<hr>
+
 Notes on Snake class:
 1. Use a double ended queue (deque) to store the snake's body.  This allows for O(1) updates to the snake's position (pop from the tail and append to the head).
 2. Handle food spawning in the snake class.  Food spawning is similar to snake spawning and the snake interacts with the food, it's just easier this way.  
@@ -212,12 +222,16 @@ Notes on Snake class:
 5. Snake.step moves the snake one frame into the future and handles eating food.  It is here that the snake grows in length by skipping popping from the tail.  It is also here that the snake considers whether or not to take a short cut by calling Snake.is_safe whenever a shortcut is considered.  
 6. Snake.is_safe sends a hypothetical snake along the shortcut, it assumes that it find's 3 food on the path (a little buffer error) and runs the snake for snake.body.length steps.  If the hypothetical snake does not bite it's own tail in this time then the shortcut is deemed safe and the snake follows it.  Otherwise, the snake continues to follow the tried and true Hamiltonian Cycle.
 
+<hr>
+
 Notes on Game class:
 1. While the array may only be say 50 by 50 in size, the actual display is much larger say 800 by 800 (depending on the settings).  i.e: If we want to draw an apple at location (1, 1) and the grid is (10 by 10) but the window is (100 by 100) we would actually need to draw the apple centered at (15, 15).  Apple at (8, 5) -> (85, 55).  Game.map_to_grid handles this transformation when drawing the snake and apple.
 2. Game.game_events handles quitting the game by x and reading in the keyboard input.  These events are then handled in a series of if / elif statements in the Game.run while-loop.
 3. Also handled in the while loop is a call to Snake.step which progresses the snake forward one step in time.  
 4. At the end of every while-loop iteration, Game.draw is called to blit the current game state to the screen.  
 5. Whenever a keyboard input is handled, a temporary lock is placed on the keyboard that expires after 0.2 seconds.  This prevents users from accidentally pressing a key multiple times in a single press. LOCK_TIME can be adjusted in settings.py.
+
+<hr>
 
 Last but not least notes on settings: more notes in the settings.py file
 1. All default settings are stored in a dictionary in settings.py which is imported and then unpacked as keyword input to the Game class.  
@@ -227,6 +241,9 @@ Last but not least notes on settings: more notes in the settings.py file
 5. Using a small MAX_SIZE (6) and SHUFFLE turned on makes the Hamiltonian Cycle appear more random while a large MAX_SIZE (40) and SHUFFLE off makes the Hamiltonian Cycle appear very orderly
 6. SHORTCUTS are changeable by tapping s key in game, when True it allows the snake to take shortcuts and when False the snake must strictly follow the Hamiltonian Cycle.
 7. SHOW_PATH toggles the Hamiltonian Cycle visibility on and off, can be changed in game with the h key.
+
+<img src="images/obedient.gif" width="66%">
+<hr>
 
 
 </details>
@@ -247,6 +264,9 @@ Choose the direction that has the lowest cost to reach the food and then check i
 If the best direction follows the Hamiltonian Cycle, then is safe.
 
 If it does not follow the Hamiltonian Cycle, then send out a hypothetical snake to take one step in the chosen direction and then follow the Hamiltonian Cycle for SNAKE.body.length + hypothetical_food steps.  If the hypothetical snake does not bite it's own tail then the direction is safe.  Here hypothetical_food is set to 5 meaning we expect the snake to at most find 5 food on this path.  This is important because the tail does not move when the snake finds food.  This parameter is not accessible in settings.py, it is found in Snake.is_safe and can be increased to perhaps 10 if you wish to be extremely cautious.  I would recommend keeping it at least 3 though to avoid mistakes near the end-game.
+
+<img src="images/free.gif" width="66%">
+<hr>
 
 </details>
 
