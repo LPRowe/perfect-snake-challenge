@@ -1,26 +1,13 @@
 import time
-import math
 import collections
 import functools
 import random
 
 import numpy as np
 import pygame
-import matplotlib.pyplot as plt
 
-from cycle_growth import UnionFind, HamCycle
+from cycle_growth import HamCycle
 import settings
-
-def spawn(R, C, choices = None):
-    """
-    Returns a random location on a grid of dimensions (R, C).
-    If Choices is given, randomly selects a position from choices (a list of positions (y, x)).
-    """
-    if choices is None:
-        return random.randint(0, R-1), random.randint(0, C-1)
-    elif len(choices) == 1:
-        return (-1, -1)
-    return random.choice(choices)
 
 class Snake:
     def __init__(self, R, C, graph, start_length, centered = True, shortcuts = True):
@@ -127,7 +114,12 @@ class Game():
         
         for key in kwargs:
             self.__dict__[key] = kwargs[key]
-        self.SURFACE = pygame.display.set_mode((self.WIDTH, self.HEIGHT))
+        
+        # set display width and height
+        if self.WIDTH is None:
+            self.WIDTH, self.HEIGHT = self.C*self.COLUMN_WIDTH, self.R*self.COLUMN_WIDTH
+            
+        self.SURFACE = pygame.display.set_mode((self.HEIGHT, self.WIDTH))
         self.COL_WIDTH = self.WIDTH // self.C
         self.ROW_HEIGHT = self.HEIGHT // self.R
         
@@ -157,6 +149,9 @@ class Game():
         self.input_lock = time.time() + self.LOCK_TIME
         
     def get_grid_surface(self):
+        """
+        Creates a pygame surface with a grid that marks the rows and columns that the snake can move on.
+        """
         arr = [[(0,0,0) for _ in range(self.WIDTH)] for _ in range(self.HEIGHT)]
         for i in range(0, self.HEIGHT, self.ROW_HEIGHT):
             for j in range(self.WIDTH):
@@ -167,6 +162,10 @@ class Game():
         return pygame.surfarray.make_surface(np.array(arr))
     
     def get_ham_surface(self, graph, start = (0, 0)):
+        """
+        Creates a pygame surface showing the hamiltonian path.
+        Returns ham_surface_with_grid, ham_surface_with_grid_hidden
+        """
         ham_surface_grid = self.GRID_SURFACE.copy()
         ham_surface = pygame.surfarray.make_surface(np.array([[(0,0,0) for _ in range(self.WIDTH)] for _ in range(self.HEIGHT)]))
         path = [start, graph[start]]
@@ -188,8 +187,11 @@ class Game():
         x = (self.COL_WIDTH // 2) + j * self.COL_WIDTH
         return (y, x)
         
-        
     def run(self):
+        """
+        Main game loop.
+        Handles input key presses, updating snake position, and drawing the background and snake.
+        """
         
         # Set display icon and window name
         logo = pygame.image.load("./graphics/simple-logo.png")
@@ -215,12 +217,21 @@ class Game():
                     self.temporary_lock()
                     self.active = False
                 elif keys[pygame.K_g]:
+                    self.UPDATE_BACKGROUND = True
                     self.temporary_lock()
                     self.SHOW_GRID = not self.SHOW_GRID
+                    print("Show Grid",self.SHOW_GRID)
                 elif keys[pygame.K_h]:
+                    self.UPDATE_BACKGROUND = True
                     self.temporary_lock()
                     self.SHOW_PATH = not self.SHOW_PATH
-                    print('SP', self.SHOW_PATH)
+                    print('Show Path', self.SHOW_PATH)
+                elif keys[pygame.K_s]:
+                    self.temporary_lock()
+                    self.SHORTCUTS = not self.SHORTCUTS
+                    self.SNAKE.shortcuts = self.SHORTCUTS
+                    self.SNAKE.cost = self.SNAKE.calc_cost(self.SNAKE.food)
+                    print('Shortcuts', self.SHORTCUTS)
                 
             # Move snake forward one step
             self.SNAKE.step()
@@ -240,23 +251,26 @@ class Game():
         self.mouse_pos = pygame.mouse.get_pos()
         
     def get_food_rect(self):
+        """Returns [top, left, width, height] for the food object in pixels."""
         i, j = self.map_to_grid(*self.SNAKE.food)
         x0, y0 = j - self.SNAKE_WIDTH // 2, i - self.SNAKE_WIDTH // 2
-        #x1, y1 = j + self.SNAKE_WIDTH // 2, i + self.SNAKE_WIDTH // 2
         return [y0, x0, self.SNAKE_WIDTH, self.SNAKE_WIDTH]
 
     def draw(self):
-        # blank screen
-        self.SURFACE.blit(self.BLANK, (0, 0))
+        """Updates pygame display with background, snake and food."""
+        if self.UPDATE_BACKGROUND:
+            self.SURFACE.blit(self.BLANK, (0, 0)) # blank screen
+            self.UPDATE_BACKGROUND = False
         
+        # Draw grid and / or hamiltonian cycle
         if self.SHOW_PATH and self.SHOW_GRID:
             self.SURFACE.blit(self.HAM_SURFACE_GRID, (0, 0))
         elif self.SHOW_PATH:
-            # Add Hamiltonian Path
             self.SURFACE.blit(self.HAM_SURFACE, (0, 0))
         elif self.SHOW_GRID:
-            # Add grid
             self.SURFACE.blit(self.GRID_SURFACE, (0, 0))
+        else:
+            self.SURFACE.blit(self.BLANK, (0, 0))
         
         # Draw snake
         pygame.draw.lines(self.SURFACE, self.SNAKE_COLOR, False, 
@@ -268,16 +282,20 @@ class Game():
         self.SNAKE.food
         pygame.draw.rect(self.SURFACE, self.FOOD_COLOR, self.get_food_rect())
         
-        # blit oultine of shape being considered (use pygame.draw)
-        #if self.shape_outline:
-        #    pygame.draw.lines(self.SURFACE, (200, 200, 200), True, 
-        #                       self.shape_outline, 5)
-            
-        # add banner indicating current setting
-        #self.SURFACE.blit(self.banner[self.shape_id], (0, 0))
-        
+        # Update display
         pygame.display.flip()
+
+def spawn(R, C, choices = None):
+    """
+    Returns a random location on a grid of dimensions (R, C).
+    If Choices is given, randomly selects a position from choices (a list of positions (y, x)).
+    """
+    if choices is None:
+        return random.randint(0, R-1), random.randint(0, C-1)
+    elif len(choices) == 1:
+        return (-1, -1)
+    return random.choice(choices)
 
 if __name__ == "__main__":
     g = Game(**settings.settings)
-    g.run()    
+    g.run()

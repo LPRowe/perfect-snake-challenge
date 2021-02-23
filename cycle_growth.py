@@ -25,8 +25,9 @@ Idea: For any arry of size (M by N) where either or both of M and N must be even
 """
 import collections
 import functools
-import matplotlib.pyplot as plt
 import random
+
+import matplotlib.pyplot as plt
 
 class UnionFind:
     def __init__(self):
@@ -300,7 +301,7 @@ class HamCycle:
 if __name__ == "__main__":
     plt.close('all')
     R, C = 30, 30
-    ham = HamCycle(R, C, max_size = 36, shuffle = True, display = False)
+    ham = HamCycle(R, C, max_size = 36, shuffle = True, display = True)
 
 
 
