@@ -300,7 +300,7 @@ class HamCycle:
 
 if __name__ == "__main__":
     plt.close('all')
-    R, C = 30, 30
+    R, C = 6, 6
     ham = HamCycle(R, C, max_size = 36, shuffle = True, display = True)
 
 

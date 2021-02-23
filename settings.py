@@ -1,3 +1,29 @@
+"""
+A few additional notes on settings:
+    
+1. All default settings are stored in a dictionary in settings.py which is imported and then 
+   unpacked as keyword input to the Game class.  
+   
+2. Number of rows (R) and number of columns (C) must be even.  
+   This is because rectangular subarrays with an odd number of elements cannot have a Hamiltonian Cycle. 
+   By setting R and C to even numbers the HamCycle.subdivide process can ensure that all subarrays 
+   have an even number of elements.
+   
+3. You can either set the window WIDTH and HEIGHT in pixels <b>or</b> set the BOX_WIDTH in pixels.  
+   If you set WIDTH to None and choose a BOX_WIDTH then the size of the window will adjust to fit the 
+   row and column input values.  BOX_WIDTH is recommended as it avoids skewing of the grid when R &neq; C.
+   
+4. The game speed can be adjusted in game, but you can also choose a default game speed by adjusting SLEEP_TIME
+
+5. Using a small MAX_SIZE (6) and SHUFFLE turned on makes the Hamiltonian Cycle appear more random 
+   while a large MAX_SIZE (40) and SHUFFLE off makes the Hamiltonian Cycle appear very orderly
+   
+6. SHORTCUTS are changeable by tapping s key in game, when True it allows the snake to take 
+   shortcuts and when False the snake must strictly follow the Hamiltonian Cycle.
+   
+7. SHOW_PATH toggles the Hamiltonian Cycle visibility on and off, can be changed in game with the h key.
+"""
+
 settings = {
             # =============================================================================
             # WINDOW SETTINGS

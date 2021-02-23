@@ -72,7 +72,7 @@ class Snake:
             i, j = self.body[0]
             new_head = min((pos for pos in ((i+1,j),(i-1,j),(i,j+1),(i,j-1)) if pos not in self.body), 
                            key = lambda p: self.cost[p])
-            if self.is_safe(new_head):
+            if new_head == self.graph[self.body[0]] or self.is_safe(new_head):
                 # Make sure short cut doesn't lead to potential death
                 self.body.appendleft(new_head)
             else:
