@@ -136,15 +136,11 @@ This process can be applied randomly across the image until all cycles are conne
 
 To do so we first put all of the edges into a <b>union-find</b> data structure, where each cycle is it's own group of edges.  
 
-Then we create windows, (called a kernel in the code), of size 2 by 2. The kernel is either ```| | or <u>&oline;&oline;</u>```.  
-
-```html5
-| | <u>&oline;&oline;</u>
-```
+Then we create windows, (called a kernel in the code), of size 2 by 2. The kernel is either | | or <ins>&oline;&oline;</ins>. 
 
 A window is created for every possible 2 by 2 region on the array.  
 
-If the two parallel edges both align with an edge in the subcycles and each edge belongs to a different subycle then switch the edges from | | to <u>&oline;&oline;</u> or vice versa.  
+If the two parallel edges both align with an edge in the subcycles and each edge belongs to a different subycle then switch the edges from | | to <ins>&oline;&oline;</ins> or vice versa.  
 
 After doing so, update the union-find data structure by removing the old edges, adding the new edges, and ensuring that the two formerly separate subcycles are merged into one larger subcycle.
 
